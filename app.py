@@ -22,10 +22,8 @@ def load_json(max_questions):
 
 data = load_json(max_questions)
 
-# st.write(data)
-# data
 
-st.title("AI vs Human")
+st.title("ALLM vs Human")
 
 
 def reset():
@@ -52,21 +50,13 @@ def next_question(q_name, selected, answer):
 
 if st.session_state.page == 0:
 
-    for _ in range(10):
-        st.write(" ")
+    st.space("xlarge")
 
     with st.container(horizontal_alignment="center", vertical_alignment="center"):
-        # st.markdown('<div class="full-height">', unsafe_allow_html=True)
         st.subheader("Start the game", text_alignment="center")
         st.button("Start game", on_click=set_page(1), type="primary")
 
-        # st.markdown('</div>', unsafe_allow_html=True)
-
 elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
-    # for _ in range(10):
-    #     st.write(" ")
-
-    # q_id = st.session_state.page - 1
 
     with st.container(horizontal_alignment="center", vertical_alignment="center"):
 
@@ -110,14 +100,9 @@ elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
                 key=options[3],
             )
 
-        # st.write(answer)
-        # print(st.session_state.page)
-
-        # st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.page == max_questions + 1:
-    for _ in range(10):
-        st.write(" ")
+    st.space("xlarge")
     with st.container(horizontal_alignment="center", vertical_alignment="center"):
         st.header("Game over!", text_alignment="center")
 
@@ -125,6 +110,10 @@ elif st.session_state.page == max_questions + 1:
             f"You scored {st.session_state.correct} / {max_questions}",
             text_alignment="center",
         )
+
+        st.space("medium")
+
+        st.button("Restart?", on_click=reset, type="primary")
 
 else:
     reset()
