@@ -1,4 +1,6 @@
 import random
+import time
+
 import streamlit as st
 import json
 
@@ -23,12 +25,14 @@ def load_json(max_questions):
 data = load_json(max_questions)
 
 
-st.title("ALLM vs Human")
+st.title("ALLM vs Human", anchor=False)
+st.divider()
 
 
 def reset():
     st.session_state.page = 0
     st.session_state.correct = 0
+    st.session_state.llm_correct = 0
 
 
 if "page" not in st.session_state:
@@ -47,6 +51,12 @@ def next_question(q_name, selected, answer):
     if selected == answer:
         st.session_state.correct += 1
 
+    with st.spinner():
+        time.sleep(2)  # TODO: Replace with LLM call and calculate llm output score
+
+        # TODO: Add score if llm output is correct
+        st.session_state.llm_correct = random.choice([0, 1])
+
 
 if st.session_state.page == 0:
 
@@ -63,8 +73,11 @@ elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
         question = data[st.session_state.page - 1]
         audio_file, options, answer = question.values()
 
-        st.subheader(f"Question {st.session_state.page}")
+        st.subheader(f"Question {st.session_state.page}", anchor=False)
         st.audio(f"{audio_folder}/{audio_file}", autoplay=True)
+
+        st.space("medium")
+        st.write("Choose correct option.")
 
         with st.container():
             c1, c2 = st.columns(2)
@@ -100,6 +113,15 @@ elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
                 key=options[3],
             )
 
+        st.space("medium")
+        with st.container(horizontal_alignment="right"):
+
+            st.button(
+                "Restart",
+                on_click=reset,
+                type="primary",
+            )
+
 
 elif st.session_state.page == max_questions + 1:
     st.space("xlarge")
@@ -111,9 +133,21 @@ elif st.session_state.page == max_questions + 1:
             text_alignment="center",
         )
 
+        st.subheader(
+            f"LLM scored {st.session_state.llm_correct} / {max_questions}",
+            text_alignment="center",
+        )
+
+        if st.session_state.correct > st.session_state.llm_correct:
+            st.subheader("You won!!", text_alignment="center")
+        elif st.session_state.correct < st.session_state.llm_correct:
+            st.subheader("LLM won!!", text_alignment="center")
+        else:
+            st.subheader("Both won!", text_alignment="center")
+
         st.space("medium")
 
-        st.button("Restart?", on_click=reset, type="primary")
+        st.button("New game", on_click=reset, type="primary")
 
 else:
     reset()
