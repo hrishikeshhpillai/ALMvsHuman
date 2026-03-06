@@ -51,11 +51,12 @@ def next_question(q_name, selected, answer):
     if selected == answer:
         st.session_state.correct += 1
 
-    with st.spinner():
-        time.sleep(2)  # TODO: Replace with LLM call and calculate llm output score
+    with spinner_container:
+        with st.spinner():
+            time.sleep(2)  # TODO: Replace with LLM call and calculate llm output score
 
-        # TODO: Add score if llm output is correct
-        st.session_state.llm_correct = random.choice([0, 1])
+            # TODO: Add score if llm output is correct
+            st.session_state.llm_correct = random.choice([0, 1])
 
 
 if st.session_state.page == 0:
@@ -67,6 +68,8 @@ if st.session_state.page == 0:
         st.button("Start game", on_click=set_page(1), type="primary")
 
 elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
+
+    spinner_container = st.container()
 
     with st.container(horizontal_alignment="center", vertical_alignment="center"):
 
@@ -139,8 +142,10 @@ elif st.session_state.page == max_questions + 1:
         )
 
         if st.session_state.correct > st.session_state.llm_correct:
+            st.balloons()
             st.subheader("You won!!", text_alignment="center")
         elif st.session_state.correct < st.session_state.llm_correct:
+            st.balloons()
             st.subheader("LLM won!!", text_alignment="center")
         else:
             st.subheader("Both won!", text_alignment="center")
