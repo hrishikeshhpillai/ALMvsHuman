@@ -145,7 +145,6 @@ elif st.session_state.page == max_questions + 1:
             st.balloons()
             st.subheader("You won!!", text_alignment="center")
         elif st.session_state.correct < st.session_state.llm_correct:
-
             st.subheader("LLM won!!", text_alignment="center")
         else:
             st.balloons()
