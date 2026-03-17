@@ -1,33 +1,41 @@
 import random
 import time
+import io
 
 import streamlit as st
 import json
 from transformers import AudioFlamingo3ForConditionalGeneration, AutoProcessor
-
+import numpy as np
 max_questions = 5
 
 af3_model_id = "nvidia/audio-flamingo-3-hf"
-print("Loading model...")
-
 target_device = "cuda:0" 
 
-try:
-    af3_processor = AutoProcessor.from_pretrained(af3_model_id)
-    af3_model = AudioFlamingo3ForConditionalGeneration.from_pretrained(af3_model_id, device_map=target_device)
-    print(f"Model loaded successfully to {target_device}.")
-except Exception as e:
-    print(f"Failed to load model: {e}")
-    af3_processor = None
-    af3_model = None
+@st.cache_resource
+def load_model():
+    print("Loading model...")
+    try:
+        processor = AutoProcessor.from_pretrained(af3_model_id)
+        model = AudioFlamingo3ForConditionalGeneration.from_pretrained(af3_model_id, device_map=target_device)
+        print(f"Model loaded successfully to {target_device}.")
+        return processor, model
+    except Exception as e:
+        print(f"Failed to load model: {e}")
+        return None, None
 
+af3_processor, af3_model = load_model()
 
 def infer_af3(question, options, audio_file):
-    if af3_model is None:
+    if af3_model is None or af3_processor is None:
         return "Model not loaded properly."
 
     options_text = "\n".join([f"- {opt}" for opt in options])
-    prompt = f"{question}\nOptions:\n{options_text}\nAnswer accurately using the text from the correct option."
+    prompt = (
+        f"Question: {question}\n"
+        f"Options:\n{options_text}\n\n"
+        "Instruction: You must answer strictly by copying the exact text of the correct option. "
+        "Do NOT answer with letters like A, B, C, or D. Output absolutely nothing else but the exact option text."
+    )
 
     conversation = [
     {
@@ -51,19 +59,21 @@ def infer_af3(question, options, audio_file):
 
 
 @st.cache_data
-def load_json(max_questions):
-    with open("/Users/hrishikeshhpillai/Hrishi/ALMvsHuman/audio.json", "r") as f:
-        data = json.load(f)
-    # print(list(data.values()))
+def load_json_dataset(max_questions):
+    print("Loading local data.json...")
+    try:
+        with open("audio.json", "r") as f:
+            all_data = json.load(f)
+        
+        sampled_data = random.sample(all_data, min(max_questions, len(all_data)))
+        return sampled_data
+    except Exception as e:
+        print(f"Error loading dataset: {e}")
+        st.error(f"Failed to load dataset: {e}")
+        return []
 
-    data = random.sample(list(data.values()), max_questions)
 
-    sample = [data[i] for i in range(len(data))]
-
-    return sample
-
-
-data = load_json(max_questions)
+data = load_json_dataset(max_questions)
 
 
 col1, col2 = st.columns([3, 1])
@@ -99,27 +109,28 @@ def set_page(name):
 
 
 def next_question(q_name, selected, answer):
-    # print("Clicked", q_name, st.session_state.clicked)
-    st.session_state.page = q_name + 1
-
     if selected == answer:
         st.session_state.correct += 1
 
     with st.spinner(f"Waiting for {st.session_state.selected_model}..."):
         try:
             current_data = data[q_name - 1]
-            audio_file = current_data.get("audio_id", current_data.get("file", ""))
-            question_text = current_data.get("question", "Listen to the audio and choose the correct option.")
-            options = current_data.get("options", [])
+            instruction_text = current_data.get("question", current_data.get("instruction", "Listen to the audio and choose the correct option."))
+            choices = current_data.get("choices", [])
+            
+            audio_data = current_data.get("audio_id", current_data.get("context")) 
+            audio_file = audio_data.get("path") if isinstance(audio_data, dict) else audio_data
 
-            llm_response = infer_af3(question_text, options, audio_file)
-            # llm_response = "testing"
-            print(f"LLM Response: {llm_response}")
+            llm_response = infer_af3(instruction_text, choices, audio_file)
+            print(f"AF3 Response: {llm_response}")
             
             if answer.lower() in llm_response.lower():
                 st.session_state.llm_correct += 1
         except Exception as e:
-            print(f"Error during LLM inference: {e}")
+            print(f"Error during AF3 inference: {e}")
+            st.error(f"Error during inference: {e}")
+            
+    st.session_state.page = q_name + 1
 
 
 if st.session_state.page == 0:
@@ -135,50 +146,36 @@ elif (st.session_state.page >= 1) and (st.session_state.page <= max_questions):
     with st.container(horizontal_alignment="center", vertical_alignment="center"):
 
         current_data = data[st.session_state.page - 1]
-        audio_file = current_data.get("audio_id", current_data.get("file", ""))
-        question_text = current_data.get("question", "Listen to the audio and choose the correct option.")
-        options = current_data.get("options", [])
+        
+        instruction_text = current_data.get("question", current_data.get("instruction", "Listen to the audio and choose the correct option."))
+        choices = current_data.get("choices", [])
         answer = current_data.get("answer", "")
-
+        
         st.subheader(f"Question {st.session_state.page}", anchor=False)
-        st.write(f"**{question_text}**")
-        st.audio(audio_file, autoplay=True)
+        st.write(f"**{instruction_text}**")
+        
+        audio_data = current_data.get("audio_id", current_data.get("context"))
+        
+        try:
+            st.audio(audio_data, autoplay=True)
+        except Exception as e:
+            st.error(f"Failed to play audio path `{audio_data}`: {e}")
 
         st.space("medium")
 
         with st.container():
             c1, c2 = st.columns(2)
 
-            c1.button(
-                options[0],
-                on_click=next_question,
-                args=(st.session_state.page, options[0], answer),
-                use_container_width=True,
-                key=options[0],
-            )
-            c2.button(
-                options[1],
-                on_click=next_question,
-                args=(st.session_state.page, options[1], answer),
-                use_container_width=True,
-                key=options[1],
-            )
+            if len(choices) > 0:
+                c1.button(choices[0], on_click=next_question, args=(st.session_state.page, choices[0], answer), use_container_width=True, key=choices[0])
+            if len(choices) > 1:
+                c2.button(choices[1], on_click=next_question, args=(st.session_state.page, choices[1], answer), use_container_width=True, key=choices[1])
 
             c3, c4 = st.columns(2)
-            c3.button(
-                options[2],
-                on_click=next_question,
-                args=(st.session_state.page, options[2], answer),
-                use_container_width=True,
-                key=options[2],
-            )
-            c4.button(
-                options[3],
-                on_click=next_question,
-                args=(st.session_state.page, options[3], answer),
-                use_container_width=True,
-                key=options[3],
-            )
+            if len(choices) > 2:
+                c3.button(choices[2], on_click=next_question, args=(st.session_state.page, choices[2], answer), use_container_width=True, key=choices[2])
+            if len(choices) > 3:
+                c4.button(choices[3], on_click=next_question, args=(st.session_state.page, choices[3], answer), use_container_width=True, key=choices[3])
 
         st.space("medium")
         with st.container(horizontal_alignment="right"):
