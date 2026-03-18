@@ -56,4 +56,6 @@ pip install -r requirements.txt
 
 ## 🎤 Acknowledgements
 
+- [Audio Flamingo 3](https://github.com/NVIDIA/audio-flamingo/tree/audio_flamingo_3)
+
 ## ✏️ Citation
