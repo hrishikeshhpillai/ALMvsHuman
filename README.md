@@ -17,7 +17,7 @@ ALM vs Human is a fun game to compete with an audio language model and see the p
 
 **1. Clone the repository**
 ```sh
-git clone [https://github.com/hrishikeshhpillai/ALMvsHuman.git](https://github.com/hrishikeshhpillai/ALMvsHuman.git)
+git clone https://github.com/hrishikeshhpillai/ALMvsHuman.git
 cd ALMvsHuman
 ```
 
