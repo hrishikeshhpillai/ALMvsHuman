@@ -13,6 +13,7 @@ ALM vs Human is a fun game to compete with an audio language model and see the p
 ## ⚡️ Requirements
 
 **Hardware Requirement:** This project requires an NVIDIA A100 or a similar GPU with at least **48GB of VRAM** for ALM inference.
+
 **Prerequisites:** Ensure [Anaconda](https://www.anaconda.com/) or [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main) is installed on your system.
 
 **1. Clone the repository**
