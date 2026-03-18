@@ -17,7 +17,16 @@ ALM vs Human is a fun game to compete with an audio language model and see the p
 ## 📂 File Structure
 
 <pre>
-File structure
+├── app.py
+├── assets
+│   └── banner.png
+├── audio.json
+├── index.html
+├── main.py
+├── README.md
+└── static
+    ├── logo-left.png
+    └── logo-right.png
 </pre>
 
 ## 🎤 Acknowledgements
