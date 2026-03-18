@@ -1,8 +1,25 @@
-# ALMvsHuman
+<div align="center">
+  <img src="/assets/banner.png">
+</div>
+
+<hr>
 
 
-# To run streamlit
+ALM vs Human is a fun game to compete with an audio language model and see the performance in comparsion to the player.
 
-```terminaloutput
-streamlit run app.py
-```
+## ✨ Features
+
+
+## ⚡️ Requirements
+
+## 🚀 Getting Started
+
+## 📂 File Structure
+
+<pre>
+File structure
+</pre>
+
+## 🎤 Acknowledgements
+
+## ✏️ Citation
